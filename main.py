@@ -1,4 +1,4 @@
-import axelrod as axl
+import deap, axelrod as axl
 
 
 players = (axl.Cooperator(), axl.Alternator())
