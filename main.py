@@ -87,13 +87,20 @@ def create_toolbox(num_bits):
     toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 
     # Operator for selecting individuals for breeding
-    toolbox.register("select", tools.selRoulette)   # based on fitness
+    toolbox.register("select", tools.selTournament)   # based on fitness
 
     return toolbox
 
 
+def off_sel(population):
+    n = len(population)
+    return toolbox.select(population, n, n)
+
+
 if __name__ == "__main__":
-    num_bits = 64
+    num = input("What depth? ")
+    pwr = int(re.search(r'\d+', num).group())
+    num_bits = 4**pwr
 
     toolbox = create_toolbox(num_bits)
 
@@ -103,9 +110,7 @@ if __name__ == "__main__":
 
     prob_cross, prob_mute = 0.5, 0.2
 
-    num = input("How many generations? ")
-
-    num_generations = int(re.search(r'\d+', num).group())
+    num_generations = 100
 
     print('\nStarting the evolution process')
 
@@ -121,8 +126,7 @@ if __name__ == "__main__":
         print("\n===== Generation", g)
 
         # Select the next generation individuals
-        offspring = toolbox.select(population, len(population))
-        print(len(offspring))
+        offspring = off_sel(population)
 
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
