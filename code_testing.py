@@ -2,10 +2,6 @@ import axelrod as axl
 from deap import base, creator, tools
 import random, re
 
-# DEFAULTS
-GAME_LENGTH = 70
-MEMORY_DEFAULT = 3
-
 
 # Fitness Function
 def fit_func(individual):
@@ -15,61 +11,18 @@ def fit_func(individual):
 # playing a bit string strategy
 def play_ind(bits):
     score = 0
-    opp_sc = 0
     for p1, p2 in zip(bits[0::2], bits[1::2]):
-        if p1 == '1':
-            if p2 == '1':
+        if p1 == 1:
+            if p2 == 1:
                 score += 3
-                opp_sc += 3
             else:
                 score += 0
-                opp_sc += 5
         else:
-            if p2 == '1':
+            if p2 == 1:
                 score += 5
-                opp_sc += 0
             else:
                 score += 1
-                opp_sc += 1
-    return score, opp_sc
-
-
-def eval_two(i1, i2, p=MEMORY_DEFAULT):
-
-    # history setup; all C for even start
-    game = ''
-    i = 0
-    while i < p:
-        game += '11'
-        i += 1
-
-    # build string based on the 2 individuals (strategies)
-    t = 0
-    depth = p * 2   # length of string history of p memory depth
-    while t < GAME_LENGTH:
-        ith = get_ith(game[-depth:], p)
-        game += str(i1[ith])
-        game += str(i2[ith])
-        t += 1
-
-    # get scores of individuals
-    p1, p2 = play_ind(game)
-    return p1,p2
-
-
-# get the index of the the next move (from strategy bit string)
-def get_ith(hist, mem_depth=MEMORY_DEFAULT):
-    pairs = ['11', '10', '01', '00']
-    vals = []
-    for c1, c2 in zip(hist[0::2], hist[1::2]):
-        pair = c1 + c2
-        vals.append(pairs.index(pair))
-    i = 0
-    ith = 0
-    while i < mem_depth:
-        ith += vals[i] * 4 ** (mem_depth - (i + 1))
-        i += 1
-    return ith
+    return score
 
 
 # Create the toolbox with the right parameters
@@ -92,8 +45,6 @@ def create_toolbox(num_bits):
 
     # Register the evaluation operator
     toolbox.register("evaluate", fit_func)
-
-    toolbox.register("eval2", eval_two)
 
     # Register the crossover operator
     toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
@@ -131,14 +82,8 @@ if __name__ == "__main__":
 
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, population))
-    # ^ restructure that
-    f = []
-    for i1, i2 in zip(population[::2], population[1::2]):
-        e1, e2 = toolbox.eval2(i1,i2,pwr)
-        f.append((e1,))
-        f.append((e2,))
-
-    for ind, fit in zip(population, f):
+    print(fitnesses)
+    for ind, fit in zip(population, fitnesses):
         ind.fitness.values = fit
 
     print('\nEvaluated', len(population), 'individuals')
@@ -172,20 +117,15 @@ if __name__ == "__main__":
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        f2 = []
-        for i1, i2 in zip(offspring[::2], offspring[1::2]):
-            e1, e2 = toolbox.eval2(i1, i2, pwr)
-            f.append((e1,))
-            f.append((e2,))
         fitnesses = map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, f2):
+        for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        print('Re-evaluated', len(offspring), 'individuals')
+        print('Re-evaluated', len(invalid_ind), 'individuals')
 
         # The population is entirely replaced by the offspring
         population[:] = offspring
-        print(population)
+        print("pop", population)
 
         # Gather all the fitnesses in one list and print the stats
         fits = [ind.fitness.values[0] for ind in population]
@@ -204,4 +144,3 @@ if __name__ == "__main__":
     best_ind = tools.selBest(population, 1)[0]
     print('\nBest individual:\n', best_ind)
     print('\nFitness:', play_ind(best_ind))
-
