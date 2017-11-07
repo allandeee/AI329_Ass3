@@ -5,7 +5,8 @@ import random, re
 # DEFAULTS
 GAME_LENGTH = 70
 MEMORY_DEFAULT = 3
-N_GEN = 1000
+N_GEN = 3000
+PWR = 3
 
 
 # playing a bit string strategy
@@ -93,7 +94,7 @@ def create_toolbox(num_bits):
     toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
 
     # Register a mutation operator
-    toolbox.register("mutate", tools.mutFlipBit, indpb=0.1)
+    toolbox.register("mutate", tools.mutFlipBit, indpb=0.2)
 
     # Operator for selecting individuals for breeding
     toolbox.register("select", tools.selRoulette)   # based on fitness
@@ -101,10 +102,42 @@ def create_toolbox(num_bits):
     return toolbox
 
 
-def strategy_gen():
-    num = input("What depth? ")
-    pwr = int(re.search(r'\d+', num).group())
+def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
+    c = len(population)
+    avg = 0
+    mnm = 1000
+    fits = []
+    for i1, i2 in zip(population[::2], population[1::2]):
+        e1, e2 = toolbox.eval2(i1, i2, PWR)
+        fits.append(e1)
+        fits.append(e2)
+        if e1 < mnm:
+            mnm = e1
+        if e2 < mnm:
+            mnm = e2
+        avg += e1 + e2
+    avg = avg/c
+    a = a_scale(avg, mnm)
+    b = b_scale(avg, mnm)
+    fits2 = []
+    for x in fits:
+        f = a * x + b
+        fits2.append((f,))
+    return fits2
+
+
+def a_scale(avg, mnm):
+    print(avg, mnm)
+    return avg/(avg-mnm)
+
+
+def b_scale(avg, mnm):
+    return (-mnm)*(avg/(avg-mnm))
+
+
+def strategy_gen(pwr=3):
     num_bits = 4 ** pwr
+    PWR = pwr
 
     toolbox = create_toolbox(num_bits)
 
@@ -119,11 +152,7 @@ def strategy_gen():
     print('\nStarting the evolution process')
 
     # Evaluate the entire population
-    f = []
-    for i1, i2 in zip(population[::2], population[1::2]):
-        e1, e2 = toolbox.eval2(i1, i2, pwr)
-        f.append((e1,))
-        f.append((e2,))
+    f = eval_pop_fit(population, toolbox)
 
     for ind, fit in zip(population, f):
         ind.fitness.values = fit
@@ -162,11 +191,7 @@ def strategy_gen():
 
         # Re-evaluate all individuals
         # invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        f2 = []
-        for i1, i2 in zip(offspring[::2], offspring[1::2]):
-            e1, e2 = toolbox.eval2(i1, i2, pwr)
-            f2.append((e1,))
-            f2.append((e2,))
+        f2 = eval_pop_fit(offspring, toolbox)
 
         # fitnesses = map(toolbox.evaluate, offspring)
         for ind, fit in zip(offspring, f2):
@@ -198,6 +223,8 @@ def strategy_gen():
     best_ind = tools.selBest(population, 1)[0]
     print('\nBest individual:\n', best_ind)
     print('\nFitness:', best_ind.fitness.values[0])
+
+    return best_ind
 
 
 if __name__ == "__main__":
