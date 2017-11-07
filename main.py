@@ -2,40 +2,6 @@ import axelrod as axl
 from deap import base, creator, tools
 import random, re
 
-# --- AXELROD EXAMPLE ---
-# players = (axl.Cooperator(), axl.Alternator())
-# match = axl.Match(players, 5)
-# match.play()
-#
-# print(match.result)
-# print(match.final_score())
-# print(match.winner())
-#
-# print("-----------------------------")
-#
-# competitors = [axl.Cooperator(), axl.Defector(), axl.TitForTat(), axl.Grudger()]
-# tournament = axl.Tournament(competitors, turns=3, repetitions=1)
-# res = tournament.play(keep_interactions=True)
-#
-# print("\nInteractions between players")
-# matches = []
-# for player_index, interaction in sorted(res.interactions.items()):
-#     player1 = tournament.players[player_index[0]]
-#     player2 = tournament.players[player_index[1]]
-#     match = axl.Match((player1, player2), turns=3)
-#     match.result = interaction[0]
-#     matches.append(match)
-#
-# print("\nPlayers ranked")
-# c = 1
-# for p in res.ranked_names:
-#     print("%d: %s" % (c, p))
-#     c += 1
-
-# plot = axl.Plot(res)
-# p = plot.boxplot()
-# p.show()
-
 
 # Fitness Function
 def fit_func(individual):
@@ -59,6 +25,10 @@ def play_ind(bits):
     return score
 
 
+def eval_two(i1, i2,):
+    return 0,0
+
+
 # Create the toolbox with the right parameters
 def create_toolbox(num_bits):
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -79,6 +49,8 @@ def create_toolbox(num_bits):
 
     # Register the evaluation operator
     toolbox.register("evaluate", fit_func)
+
+    toolbox.register("eval2", eval_two)
 
     # Register the crossover operator
     toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
@@ -106,16 +78,26 @@ if __name__ == "__main__":
 
     random.seed(7)
 
-    population = toolbox.population(n=12)
+    population = toolbox.population(n=4)
 
     prob_cross, prob_mute = 0.5, 0.2
 
-    num_generations = 100
+    num_generations = 10
 
     print('\nStarting the evolution process')
 
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, population))
+    # ^ restructure that
+    f = []
+    for i1, i2 in zip(population[::2], population[1::2]):
+        e1, e2 = toolbox.eval2(i1,i2)
+        f.append((e1,))
+        f.append((e2,))
+
+    print(population)
+    print(fitnesses)
+    print(f)
     for ind, fit in zip(population, fitnesses):
         ind.fitness.values = fit
 
@@ -176,3 +158,4 @@ if __name__ == "__main__":
     best_ind = tools.selBest(population, 1)[0]
     print('\nBest individual:\n', best_ind)
     print('\nFitness:', play_ind(best_ind))
+
