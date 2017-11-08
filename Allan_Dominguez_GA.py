@@ -5,9 +5,9 @@ import random, re
 # DEFAULTS
 GAME_LENGTH = 70
 MEMORY_DEFAULT = 3
-N_GEN = 1500
+N_GEN = 5
 PWR = 3
-POP_SIZE = 4
+POP_SIZE = 100
 
 
 # playing a bit string strategy
@@ -38,7 +38,7 @@ def eval_two(i1, i2, p=MEMORY_DEFAULT):
     game = ''
     i = 0
     while i < p:
-        game += '11'
+        game += '00'
         i += 1
 
     # build string based on the 2 individuals (strategies)
@@ -89,7 +89,9 @@ def create_toolbox(num_bits):
     toolbox.register("defector", single_bit, 0)
     toolbox.register("def_ind", tools.initRepeat, creator.Individual, toolbox.defector, num_bits)
 
-
+    # forced cooperator
+    toolbox.register("cooperator", single_bit, 1)
+    toolbox.register("coop_ind", tools.initRepeat, creator.Individual, toolbox.cooperator, num_bits)
 
     # Initialize structures
     toolbox.register("individual", tools.initRepeat, creator.Individual,
@@ -108,7 +110,7 @@ def create_toolbox(num_bits):
     toolbox.register("mutate", tools.mutFlipBit, indpb=0.1)
 
     # Operator for selecting individuals for breeding
-    toolbox.register("select", tools.selRoulette)   # based on fitness
+    toolbox.register("select", tools.selRoulette)
 
     return toolbox
 
@@ -141,7 +143,7 @@ def a_scale(avg, mnm):
 
 
 def b_scale(avg, mnm):
-    return -mnm*(avg/(avg-mnm))
+    return (-mnm)*(avg/(avg-mnm))
 
 
 def strategy_gen(pwr=3):
@@ -155,9 +157,11 @@ def strategy_gen(pwr=3):
 
     population = toolbox.population(n=POP_SIZE)
 
-    # add a Defector to population
-    defector = toolbox.def_ind()
-    population.append(defector)
+    # add a Defector and Cooperator to population
+    # defector = toolbox.def_ind()
+    # population.append(defector)
+    # cooperator = toolbox.coop_ind()
+    # population.append(cooperator)
 
     prob_cross, prob_mute = 0.5, 0.2
 

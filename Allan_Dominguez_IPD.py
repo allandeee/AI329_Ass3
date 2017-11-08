@@ -32,8 +32,9 @@ class GA_Strategy(Player):
         'inspects_source': False,
         'manipulates_source': False,
         'manipulates_state': False,
-        'bit_string' : [0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0,
-                        1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0]
+        'bit_string' : [1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1,
+                        0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0]
+
     }
 
     def strategy(self, opponent: Player) -> Action:
@@ -42,13 +43,13 @@ class GA_Strategy(Player):
         strat = self.classifier['bit_string']
         # First move
         if not self.history:
-            return C
+            return D
         opp_hist = actions_to_str(opponent.history[-k:])
         my_hist = actions_to_str(self.history[-k:])
         history_string = ''.join([''.join(t) for t in zip(my_hist, opp_hist)])
         if len(self.history) < k:
             # can be changed to implement another strategy
-            return C
+            return D
 
         pairs = ['CC', 'CD', 'DC', 'DD']
         vals = []
