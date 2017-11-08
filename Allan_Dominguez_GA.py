@@ -5,30 +5,31 @@ import random, re
 # DEFAULTS
 GAME_LENGTH = 70
 MEMORY_DEFAULT = 3
-N_GEN = 3000
+N_GEN = 1500
 PWR = 3
+POP_SIZE = 4
 
 
 # playing a bit string strategy
 def play_ind(bits):
     score = 0
-    opp_sc = 0
+    # opp_sc = 0
     for p1, p2 in zip(bits[0::2], bits[1::2]):
         if p1 == '1':
             if p2 == '1':
                 score += 3
-                opp_sc += 3
+                # opp_sc += 3
             else:
                 score += 0
-                opp_sc += 5
+                # opp_sc += 5
         else:
             if p2 == '1':
                 score += 5
-                opp_sc += 0
+                # opp_sc += 0
             else:
                 score += 1
-                opp_sc += 1
-    return score, opp_sc
+                # opp_sc += 1
+    return score
 
 
 def eval_two(i1, i2, p=MEMORY_DEFAULT):
@@ -49,9 +50,9 @@ def eval_two(i1, i2, p=MEMORY_DEFAULT):
         game += str(i2[ith])
         t += 1
 
-    # get scores of individuals
-    p1, p2 = play_ind(game)
-    return p1, p2
+    # get score of individual
+    p1 = play_ind(game)
+    return p1,
 
 
 # get the index of the the next move (from strategy bit string)
@@ -69,6 +70,10 @@ def get_ith(hist, mem_depth=MEMORY_DEFAULT):
     return ith
 
 
+def single_bit (bit):
+    return bit
+
+
 # Create the toolbox with the right parameters
 def create_toolbox(num_bits):
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -79,6 +84,12 @@ def create_toolbox(num_bits):
 
     # Generate attributes
     toolbox.register("attr_bool", random.randint, 0, 1)
+
+    # forced defector
+    toolbox.register("defector", single_bit, 0)
+    toolbox.register("def_ind", tools.initRepeat, creator.Individual, toolbox.defector, num_bits)
+
+
 
     # Initialize structures
     toolbox.register("individual", tools.initRepeat, creator.Individual,
@@ -94,7 +105,7 @@ def create_toolbox(num_bits):
     toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
 
     # Register a mutation operator
-    toolbox.register("mutate", tools.mutFlipBit, indpb=0.2)
+    toolbox.register("mutate", tools.mutFlipBit, indpb=0.1)
 
     # Operator for selecting individuals for breeding
     toolbox.register("select", tools.selRoulette)   # based on fitness
@@ -107,15 +118,14 @@ def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
     avg = 0
     mnm = 1000
     fits = []
-    for i1, i2 in zip(population[::2], population[1::2]):
-        e1, e2 = toolbox.eval2(i1, i2, PWR)
-        fits.append(e1)
-        fits.append(e2)
-        if e1 < mnm:
-            mnm = e1
-        if e2 < mnm:
-            mnm = e2
-        avg += e1 + e2
+    for i in population:
+        score = 0
+        for j in population:
+            e1 = toolbox.eval2(i, j, PWR)
+            score += e1[0]
+        ind_avg = score/c
+        fits.append(ind_avg)
+        avg += ind_avg
     avg = avg/c
     a = a_scale(avg, mnm)
     b = b_scale(avg, mnm)
@@ -127,23 +137,27 @@ def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
 
 
 def a_scale(avg, mnm):
-    print(avg, mnm)
     return avg/(avg-mnm)
 
 
 def b_scale(avg, mnm):
-    return (-mnm)*(avg/(avg-mnm))
+    return -mnm*(avg/(avg-mnm))
 
 
 def strategy_gen(pwr=3):
     num_bits = 4 ** pwr
+    global PWR
     PWR = pwr
 
     toolbox = create_toolbox(num_bits)
 
     random.seed(7)
 
-    population = toolbox.population(n=4)
+    population = toolbox.population(n=POP_SIZE)
+
+    # add a Defector to population
+    defector = toolbox.def_ind()
+    population.append(defector)
 
     prob_cross, prob_mute = 0.5, 0.2
 

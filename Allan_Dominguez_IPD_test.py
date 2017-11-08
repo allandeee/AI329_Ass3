@@ -11,7 +11,7 @@ pwr = int(re.search(r'\d+', num).group())
 me.classifier['memory_depth'] = pwr
 me.classifier['bit_string'] = Allan_Dominguez_GA.strategy_gen(pwr)
 
-players = (me, axl.Defector())
+players = (me, axl.TitForTat())
 match = axl.Match(players, 70)
 match.play()
 
