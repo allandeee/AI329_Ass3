@@ -4,17 +4,14 @@ from axelrod.player import Player
 C, D = Action.C, Action.D
 
 
-class GA_Strategy(Player):
+class Allan_Dominguez(Player):
     """
-    A player starts by cooperating and then mimics the previous action of the
-    opponent.
+    This strategy used Genetic Algorithms to generate its strategy.
+    The strategy is in the form a bit string (classifiers['bit_string']),
+    which then utilises memory depth of 3 by default.
 
-    This strategy was referred to as the *'simplest'* strategy submitted to
-    Axelrod's first tournament. It came first.
-
-    Note that the code for this strategy is written in a fairly verbose
-    way. This is done so that it can serve as an example strategy for
-    those who might be new to Python.
+    This class is callable, can memory depth can be changed (also changing
+    the bit string). Look at Allan_Dominguez_IPD_test.py to see how this is done
 
     Names:
 
@@ -23,7 +20,7 @@ class GA_Strategy(Player):
     """
 
     # These are various properties for the strategy
-    name = 'GA Strategy'
+    name = 'Allan Dominguez GA Strategy'
     classifier = {
         'memory_depth': 3,
         'stochastic': False,

@@ -1,5 +1,5 @@
 from deap import base, creator, tools
-import random, re
+import random
 
 
 # DEFAULTS
@@ -10,7 +10,7 @@ PWR = 3
 POP_SIZE = 100
 
 
-# playing a bit string strategy
+# playing a game (represented as a bit string)
 def play_ind(bits):
     score = 0
     # opp_sc = 0
@@ -32,9 +32,10 @@ def play_ind(bits):
     return score
 
 
+# build a game (bit string) from 2 players (i1, i2)
 def eval_two(i1, i2, p=MEMORY_DEFAULT):
 
-    # history setup; all C for even start
+    # history setup; all D for even start
     game = ''
     i = 0
     while i < p:
@@ -50,7 +51,7 @@ def eval_two(i1, i2, p=MEMORY_DEFAULT):
         game += str(i2[ith])
         t += 1
 
-    # get score of individual
+    # get score of first player
     p1 = play_ind(game)
     return p1,
 
@@ -70,7 +71,8 @@ def get_ith(hist, mem_depth=MEMORY_DEFAULT):
     return ith
 
 
-def single_bit (bit):
+# function to return the bit passed
+def single_bit(bit):
     return bit
 
 
@@ -85,11 +87,11 @@ def create_toolbox(num_bits):
     # Generate attributes
     toolbox.register("attr_bool", random.randint, 0, 1)
 
-    # forced defector
+    # Initialises a Defector individual
     toolbox.register("defector", single_bit, 0)
     toolbox.register("def_ind", tools.initRepeat, creator.Individual, toolbox.defector, num_bits)
 
-    # forced cooperator
+    # Initialises a Cooperator individual
     toolbox.register("cooperator", single_bit, 1)
     toolbox.register("coop_ind", tools.initRepeat, creator.Individual, toolbox.cooperator, num_bits)
 
@@ -115,10 +117,24 @@ def create_toolbox(num_bits):
     return toolbox
 
 
+# determine 'a' in formula: a * f + b
+def a_scale(avg, mnm):
+    return avg/(avg-mnm)
+
+
+# determine 'b' in formula: a * f + b
+def b_scale(avg, mnm):
+    return (-mnm)*(avg/(avg-mnm))
+
+
+# evaluates fitness of each individual in population
 def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
     c = len(population)
     avg = 0
     mnm = 1000
+
+    # get raw fitness of each individual by playing against all other
+    # individuals in population
     fits = []
     for i in population:
         score = 0
@@ -128,6 +144,8 @@ def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
         ind_avg = score/c
         fits.append(ind_avg)
         avg += ind_avg
+
+    # calculate the scaled fitness and return that list
     avg = avg/c
     a = a_scale(avg, mnm)
     b = b_scale(avg, mnm)
@@ -138,14 +156,7 @@ def eval_pop_fit(population, toolbox=create_toolbox(4**PWR)):
     return fits2
 
 
-def a_scale(avg, mnm):
-    return avg/(avg-mnm)
-
-
-def b_scale(avg, mnm):
-    return (-mnm)*(avg/(avg-mnm))
-
-
+# main function to generate a strategy
 def strategy_gen(pwr=3):
     num_bits = 4 ** pwr
     global PWR
