@@ -40,13 +40,14 @@ class Allan_Dominguez(Player):
         strat = self.classifier['bit_string']
         # First move
         if not self.history:
-            return D
+            return C
         opp_hist = actions_to_str(opponent.history[-k:])
         my_hist = actions_to_str(self.history[-k:])
         history_string = ''.join([''.join(t) for t in zip(my_hist, opp_hist)])
         if len(self.history) < k:
-            # can be changed to implement another strategy
-            return D
+            if opponent.history[-1] == D:
+                return D
+            return C
 
         pairs = ['CC', 'CD', 'DC', 'DD']
         vals = []
